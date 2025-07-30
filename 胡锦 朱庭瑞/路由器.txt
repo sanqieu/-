@@ -1,0 +1,23 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '../views/Home.vue'
+import DishDetail from '../views/DishDetail.vue'
+import OrderCenter from '../views/OrderCenter.vue'
+import UserCenter from '../views/UserCenter.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+
+const routes = [
+  { path: '/', component: Home },
+  { path: '/dish/:id', component: DishDetail },
+  { path: '/order', component: OrderCenter },
+  { path: '/user', component: UserCenter },
+  { path: '/login', component: Login },
+  { path: '/register', component: Register }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+export default router
