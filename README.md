@@ -5,7 +5,7 @@
 bash
 pip install flask
 2. 准备后端代码
-将你整理好的 app.py 放在 python_web_demo 目录下。
+将 app.py 放在 python_web_demo 目录下。
 确保 templates 目录下有 index.html 和 admin.html。
 3. 运行 Flask 后端
 进入项目目录，命令行输入：
