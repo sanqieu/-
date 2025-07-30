@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>点菜系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: "微软雅黑", Arial, sans-serif; background: #f7f9fa; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 40px auto 20px auto; background: #fff; box-shadow: 0 2px 16px #e3e3e3; border-radius: 14px; padding: 36px 18px 24px 18px; }
+        h1 { text-align: center; color: #1c6cb7; letter-spacing:2px; }
+        h2 { color: #3472c4; border-left: 5px solid #73b0f4; padding-left: 10px; margin-top: 32px;}
+        .menu-table, .order-table { width: 100%; border-collapse: collapse; margin: 18px 0 18px 0; background: #fcfcfd;}
+        .menu-table th, .menu-table td, .order-table th, .order-table td { border: 1px solid #e2e2e2; padding: 11px 7px; text-align: center;}
+        .menu-table th, .order-table th { background: #eaf3fa; }
+        .menu-table tr:hover td { background: #f1f8ff; }
+        .order-table tr:hover td { background: #f8f9fa; }
+        .actions { margin: 20px 0 10px 0; display: flex; gap: 18px; flex-wrap: wrap;}
+        .actions label { margin-right:8px;}
+        .actions input[type=number] { width: 60px; padding:4px;}
+        .actions input[type=text] { width: 120px; padding:4px;}
+        .actions button { background: #1c6cb7; color: #fff; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; transition:.2s;}
+        .actions button:hover { background: #0a519b; }
+        .summary { margin: 12px 0; font-size: 1.13em; font-weight: 500;}
+        .discount-area { margin: 22px 0 12px 0; display: flex; align-items: center; gap:18px;}
+        .discount-area input[type=number] { width: 60px; padding:4px;}
+        .final-pay { color: #e33c3c; font-size: 1.23em; font-weight: bold; margin-top: 5px;}
+        .note { color: #888; font-size: 0.92em; margin-left:12px;}
+        .tips { color: #5e8bb7; font-size: 0.98em; margin-bottom: 2px;}
+        @media (max-width:600px) {
+            .container { padding: 7px; }
+            .actions, .discount-area { flex-direction: column; gap:8px;}
+            .menu-table, .order-table { font-size:0.98em;}
+            h1 { font-size:1.2em;}
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>点菜系统</h1>
+    <div class="tips">点击菜单快速点菜，或手动输入菜名和数量进行点菜/退菜。</div>
+    <h2>菜单</h2>
+    <table class="menu-table" id="menu-table">
+        <thead>
+        <tr>
+            <th>菜名</th>
+            <th>单价(元)</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- JS填充 -->
+        </tbody>
+    </table>
+
+    <div class="actions">
+        <label>
+            输入菜名：<input type="text" id="dish-name" placeholder="如：宫保鸡丁">
+        </label>
+        <label>
+            数量：<input type="number" id="dish-count" value="1" min="1">
+        </label>
+        <button onclick="orderDish()">点菜</button>
+        <button onclick="backDish()">退菜</button>
+    </div>
+
+    <h2>已点菜单</h2>
+    <table class="order-table" id="order-table">
+        <thead>
+        <tr>
+            <th>菜名</th>
+            <th>单价(元)</th>
+            <th>数量</th>
+            <th>小计(元)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- JS填充 -->
+        </tbody>
+    </table>
+    <div class="summary" id="order-summary"></div>
+
+    <div class="discount-area">
+        <label>折扣率(如9.5为九五折)：<input type="number" id="discount-rate" value="10" step="0.1" min="1" max="10"></label>
+        <button onclick="calcFinalPay()">结账</button>
+        <span class="note">(10为不打折，1为1折)</span>
+    </div>
+    <div class="final-pay" id="final-pay"></div>
+</div>
+
+<script>
+    // 菜单数据
+    const menu = {
+        "宫保鸡丁": 28,
+        "鱼香肉丝": 25,
+        "麻婆豆腐": 18,
+        "红烧茄子": 16,
+        "米饭": 2,
+        "可乐": 5,
+        "酸辣汤": 10,
+        "糖醋里脊": 32,
+        "拍黄瓜": 12,
+        "西红柿炒蛋": 20
+    };
+    // 点单数据
+    let orderList = {};
+
+    // 渲染菜单
+    function renderMenu() {
+        const tbody = document.querySelector('#menu-table tbody');
+        tbody.innerHTML = '';
+        for (let name in menu) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${menu[name]}</td>
+                <td><button onclick="quickOrder('${name}')">点一份</button></td>
+            `;
+            tbody.appendChild(row);
+        }
+    }
+
+    // 点菜
+    function orderDish() {
+        const name = document.getElementById('dish-name').value.trim();
+        const count = parseInt(document.getElementById('dish-count').value, 10);
+        if (!name || isNaN(count) || count <= 0) {
+            alert("请输入正确的菜名和数量！");
+            return;
+        }
+        if (!(name in menu)) {
+            alert("菜单中没有这道菜！");
+            return;
+        }
+        orderList[name] = (orderList[name] || 0) + count;
+        renderOrder();
+    }
+
+    // 菜单快捷点菜
+    function quickOrder(name) {
+        orderList[name] = (orderList[name] || 0) + 1;
+        renderOrder();
+    }
+
+    // 退菜
+    function backDish() {
+        const name = document.getElementById('dish-name').value.trim();
+        const count = parseInt(document.getElementById('dish-count').value, 10);
+        if (!name || isNaN(count) || count <= 0) {
+            alert("请输入正确的菜名和数量！");
+            return;
+        }
+        if (!(name in orderList)) {
+            alert("您的订单中没有这道菜！");
+            return;
+        }
+        if (orderList[name] < count) {
+            alert("退菜数量大于已点数量！");
+            return;
+        }
+        orderList[name] -= count;
+        if (orderList[name] === 0) delete orderList[name];
+        renderOrder();
+    }
+
+    // 渲染已点菜单
+    function renderOrder() {
+        const tbody = document.querySelector('#order-table tbody');
+        tbody.innerHTML = '';
+        let total = 0;
+        for (let name in orderList) {
+            const price = menu[name];
+            const count = orderList[name];
+            const subtotal = price * count;
+            total += subtotal;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${name}</td>
+                <td>${price}</td>
+                <td>${count}</td>
+                <td>${subtotal}</td>
+            `;
+            tbody.appendChild(row);
+        }
+        document.getElementById('order-summary').innerHTML =
+            "总价: <b>" + total + " 元</b>";
+        document.getElementById('final-pay').innerText = "";
+    }
+
+    // 结账功能
+    function calcFinalPay() {
+        let total = 0;
+        for (let name in orderList) {
+            total += menu[name] * orderList[name];
+        }
+        if (total === 0) {
+            alert("您还没有点菜哦！");
+            return;
+        }
+        let discount = parseFloat(document.getElementById('discount-rate').value);
+        if (isNaN(discount) || discount > 10 || discount <= 0) {
+            alert("请正确填写1~10的折扣率！");
+            return;
+        }
+        let pay = total * (discount / 10);
+        document.getElementById('final-pay').innerText =
+            "折后应付：" + pay.toFixed(2) + " 元";
+    }
+
+    // 初始化
+    renderMenu();
+    renderOrder();
+</script>
+</body>
+</html>

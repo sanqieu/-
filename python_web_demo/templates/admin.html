@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理后台</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body { font-family: "微软雅黑", Arial, sans-serif; background: #f7f9fa; }
+        .container { max-width: 650px; margin: 30px auto; background: #fff; border-radius: 10px; box-shadow:0 2px 14px #ececec; padding: 24px;}
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
+        th, td { border: 1px solid #e2e2e2; padding: 8px 6px; text-align: center;}
+        th { background: #eaf3fa; }
+        h2 { color: #2471b7; }
+        .actions { margin-bottom: 18px;}
+        .actions input { margin-right: 8px; padding:4px;}
+        .actions button { background: #1c6cb7; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer;}
+        .actions button:hover { background: #0a519b; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>菜单管理后台</h2>
+    <div class="actions">
+        <input type="text" id="dish-name" placeholder="菜名">
+        <input type="number" id="dish-price" placeholder="价格">
+        <button onclick="addDish()">添加</button>
+        <button onclick="modifyDish()">修改</button>
+        <button onclick="deleteDish()">删除</button>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>菜名</th>
+            <th>价格</th>
+        </tr>
+        </thead>
+        <tbody id="menu-body">
+        {% for name, price in menu.items() %}
+        <tr>
+            <td>{{ name }}</td>
+            <td>{{ price }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    function reloadMenu(data) {
+        const tbody = document.getElementById('menu-body');
+        tbody.innerHTML = "";
+        for (let name in data) {
+            let row = document.createElement('tr');
+            row.innerHTML = `<td>${name}</td><td>${data[name]}</td>`;
+            tbody.appendChild(row);
+        }
+    }
+    function addDish() {
+        const name = document.getElementById('dish-name').value.trim();
+        const price = document.getElementById('dish-price').value.trim();
+        if (!name || !price) { alert("请输入菜名和价格"); return; }
+        fetch("/admin/menu", {
+            method: "POST",
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `action=add&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}`
+        }).then(resp=>resp.json()).then(res=>{
+            if(res.status==="ok") reloadMenu(res.menu);
+            else alert(res.msg||"操作失败");
+        });
+    }
+    function modifyDish() {
+        const name = document.getElementById('dish-name').value.trim();
+        const price = document.getElementById('dish-price').value.trim();
+        if (!name || !price) { alert("请输入菜名和价格"); return; }
+        fetch("/admin/menu", {
+            method: "POST",
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `action=modify&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}`
+        }).then(resp=>resp.json()).then(res=>{
+            if(res.status==="ok") reloadMenu(res.menu);
+            else alert(res.msg||"操作失败");
+        });
+    }
+    function deleteDish() {
+        const name = document.getElementById('dish-name').value.trim();
+        if (!name) { alert("请输入菜名"); return; }
+        fetch("/admin/menu", {
+            method: "POST",
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `action=delete&name=${encodeURIComponent(name)}`
+        }).then(resp=>resp.json()).then(res=>{
+            if(res.status==="ok") reloadMenu(res.menu);
+            else alert(res.msg||"操作失败");
+        });
+    }
+</script>
+</body>
+</html>
