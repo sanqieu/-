@@ -24,4 +24,3 @@ Flask app is starting...
 前台页面：http://127.0.0.1:5000/
 后台管理：http://127.0.0.1:5000/admin
 如果你的 HTML 里有引用 static 文件夹下的 CSS/JS，Flask 会自动处理。
-
